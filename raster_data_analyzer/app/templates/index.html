@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoPixel Studio – GeoTIFF Analysis &amp; Normalization Platform</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+<!-- ============================= NAVBAR ============================= -->
+<header class="navbar">
+  <div class="navbar-inner">
+    <a href="#home" class="brand">
+      <span class="brand-mark">GP</span>
+      <span class="brand-text">GeoPixel <span class="brand-version">Studio</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#analyzer">Analyzer</a>
+      <a href="#about">About</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================= HERO ============================= -->
+<section id="home" class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <span class="hero-badge">Full-Resolution GIS Processing Engine</span>
+    <h1 class="hero-title">GeoPixel <span class="gradient-text">Studio</span></h1>
+    <p class="hero-subtitle">
+      A geospatial raster normalization &amp; matrix analysis workbench.
+      Process multi-band GeoTIFFs, sample spatial grids, and export standardized
+      rasters while preserving spatial CRS georeferencing.
+    </p>
+    <a href="#analyzer" class="btn btn-primary btn-lg">Launch Workspace</a>
+  </div>
+</section>
+
+<main id="analyzer" class="workspace">
+
+  <!-- ===================== 1. UPLOAD ===================== -->
+  <section class="card section-card" id="section-upload">
+    <div class="section-heading">
+      <span class="section-number">1</span>
+      <h2>Image / GeoTIFF Dataset Upload</h2>
+      <span class="status-pill" id="systemStatus">System Ready</span>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".tif,.tiff,.jpg,.jpeg,.png,.bmp,.gif,.webp" hidden>
+      <div class="dropzone-icon">⤒</div>
+      <p class="dropzone-title">Drag &amp; Drop an Image or GeoTIFF File Here</p>
+      <p class="dropzone-hint">Supports GeoTIFF (.tif, .tiff) and images (JPG, PNG, BMP, GIF, WEBP) up to 100 MB — images are auto-converted to TIFF</p>
+      <button type="button" class="btn btn-secondary" id="browseBtn">Browse Files</button>
+    </div>
+
+    <div class="file-meta-row" id="fileMetaRow" hidden>
+      <span id="fileNameLabel">filename.tif</span>
+      <span id="fileSizeLabel">0 MB</span>
+    </div>
+
+    <div class="progress-track" id="uploadProgressTrack" hidden>
+      <div class="progress-fill" id="uploadProgressFill"></div>
+    </div>
+
+    <div class="alert alert-error" id="uploadError" hidden></div>
+  </section>
+
+  <!-- ============== 2. RASTER INFO & CONTROLS ============== -->
+  <section class="card section-card" id="section-info">
+    <div class="section-heading">
+      <span class="section-number">2</span>
+      <h2>Raster Information &amp; Controls</h2>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-tile"><span class="stat-label">Width</span><span class="stat-value" id="statWidth">-</span></div>
+      <div class="stat-tile"><span class="stat-label">Height</span><span class="stat-value" id="statHeight">-</span></div>
+      <div class="stat-tile"><span class="stat-label">Total Bands</span><span class="stat-value" id="statBands">-</span></div>
+      <div class="stat-tile"><span class="stat-label">CRS</span><span class="stat-value" id="statCrs">-</span></div>
+      <div class="stat-tile"><span class="stat-label">Data Type</span><span class="stat-value" id="statDtype">-</span></div>
+      <div class="stat-tile"><span class="stat-label">NoData Value</span><span class="stat-value" id="statNodata">-</span></div>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="bandSelect">Selected Band</label>
+        <select id="bandSelect" disabled>
+          <option value="1">Band 1</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="rowsInput">Grid Rows (5–60)</label>
+        <input type="number" id="rowsInput" min="5" max="60" value="30" disabled>
+      </div>
+      <div class="control-group">
+        <label for="colsInput">Grid Columns (5–60)</label>
+        <input type="number" id="colsInput" min="5" max="60" value="30" disabled>
+      </div>
+      <div class="control-group control-group-btn">
+        <button type="button" class="btn btn-primary" id="buildGridBtn" disabled>Build Grid</button>
+      </div>
+    </div>
+
+    <div class="band-stats-row">
+      <div class="stat-pill">Band Min <strong id="bandMin">-</strong></div>
+      <div class="stat-pill">Band Max <strong id="bandMax">-</strong></div>
+      <div class="stat-pill">Band Mean <strong id="bandMean">-</strong></div>
+    </div>
+
+    <div class="alert alert-error" id="controlsError" hidden></div>
+  </section>
+
+  <!-- ================ 3. RAW PIXEL VALUE GRID ================ -->
+  <section class="card section-card" id="section-raw-grid">
+    <div class="section-heading">
+      <span class="section-number">3</span>
+      <h2>Raw Pixel Value Grid</h2>
+    </div>
+
+    <div class="grid-toolbar">
+      <label class="checkbox-label"><input type="checkbox" id="rawLabelsToggle" checked> Labels</label>
+      <label class="checkbox-label"><input type="checkbox" id="rawValuesToggle" checked> Values</label>
+      <div class="toolbar-spacer"></div>
+      <button type="button" class="btn btn-outline" id="downloadRawCsvBtn" disabled>Download Raw CSV</button>
+      <button type="button" class="btn btn-outline" id="downloadRawPngBtn" disabled>Download Raw PNG</button>
+    </div>
+
+    <div class="grid-scroll-wrap">
+      <div class="grid-placeholder" id="rawGridPlaceholder">Build a grid to preview raw pixel values.</div>
+      <table class="raster-grid" id="rawGridTable" hidden></table>
+    </div>
+  </section>
+
+  <!-- ================ 4. MIN-MAX NORMALIZATION ================ -->
+  <section class="card section-card" id="section-normalize">
+    <div class="section-heading">
+      <span class="section-number">4</span>
+      <h2>Min-Max Normalization</h2>
+    </div>
+
+    <p class="formula-caption">Mathematical Rescaling Model:</p>
+    <div class="formula-box" id="formulaBox">$$x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$</div>
+    <p class="formula-note">
+      Rescales array values into the standard range <span class="inline-math">$[0.0, 1.0]$</span>.
+      Invalid NoData pixels and georeferenced spatial transforms are strictly preserved across all bands.
+    </p>
+
+    <button type="button" class="btn btn-primary btn-lg" id="normalizeBtn" disabled>Normalize Raster</button>
+
+    <div class="progress-track" id="normalizeProgressTrack" hidden>
+      <div class="progress-fill" id="normalizeProgressFill"></div>
+      <span class="progress-caption" id="normalizeProgressCaption">Processing full-resolution raster array... 0%</span>
+    </div>
+
+    <div class="alert alert-error" id="normalizeError" hidden></div>
+    <div class="alert alert-success" id="normalizeSuccess" hidden></div>
+  </section>
+
+  <!-- ================ 5. NORMALIZED RASTER OUTPUT ================ -->
+  <section class="card section-card" id="section-normalized-grid">
+    <div class="section-heading">
+      <span class="section-number">5</span>
+      <h2>Normalized Raster Output</h2>
+    </div>
+
+    <div class="grid-toolbar">
+      <div class="control-group control-group-inline">
+        <label for="paletteSelect">Palette</label>
+        <select id="paletteSelect">
+          <option value="viridis" selected>Viridis</option>
+          <option value="turbo">Turbo</option>
+          <option value="grayscale">Grayscale</option>
+          <option value="terrain">Terrain</option>
+        </select>
+      </div>
+      <label class="checkbox-label"><input type="checkbox" id="normLabelsToggle" checked> Labels</label>
+      <label class="checkbox-label"><input type="checkbox" id="normValuesToggle" checked> Values</label>
+      <div class="toolbar-spacer"></div>
+      <button type="button" class="btn btn-outline" id="downloadNormCsvBtn" disabled>Download Normalized CSV</button>
+      <button type="button" class="btn btn-outline" id="downloadNormPngBtn" disabled>Download Normalized PNG</button>
+    </div>
+
+    <div class="grid-scroll-wrap">
+      <div class="grid-placeholder" id="normGridPlaceholder">Normalize the raster to preview standardized values.</div>
+      <table class="raster-grid heatmap-grid" id="normGridTable" hidden></table>
+    </div>
+
+    <a class="btn btn-primary btn-lg btn-download-tiff" id="downloadGeoTiffBtn" hidden href="#">
+      Download Full Normalized GeoTIFF (.tif)
+    </a>
+  </section>
+
+  <!-- ========================= ABOUT ========================= -->
+  <section class="card section-card" id="about">
+    <div class="section-heading">
+      <h2>About GeoPixel Studio</h2>
+    </div>
+    <p class="about-text">
+      <strong>GeoPixel Studio</strong> is a GIS platform designed for spatial dataset normalization
+      and matrix visualization. By rescaling raw array intensities to the unit range
+      <span class="inline-math">$[0, 1]$</span>, users can prepare remote sensing imagery
+      (Landsat, Sentinel, DEMs) for machine learning models and spatial statistics without
+      losing underlying georeferencing metadata.
+    </p>
+  </section>
+
+</main>
+
+<!-- ============================= FOOTER ============================= -->
+<footer class="site-footer">
+  <p>© 2026 GeoPixel Studio. Built for GIS &amp; Remote Sensing Workflows.</p>
+</footer>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

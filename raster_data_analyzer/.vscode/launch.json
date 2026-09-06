@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Run GeoPixel (Flask dev server)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "console": "integratedTerminal",
+      "env": {
+        "FLASK_DEBUG": "1",
+        "PORT": "5000"
+      },
+      "justMyCode": true
+    }
+  ]
+}
